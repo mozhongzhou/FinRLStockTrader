@@ -155,8 +155,8 @@ def add_technical_indicators(df):
     fe = FeatureEngineer(
         use_technical_indicator=True,
         tech_indicator_list=config.INDICATORS,
-        use_vix=False,
-        use_turbulence=False,
+        use_vix=True,
+        use_turbulence=True,
         user_defined_feature=False,
     )
 
