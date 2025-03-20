@@ -10,7 +10,6 @@ import argparse
 # 导入配置
 sys.path.append(".")
 import config
-import config_tickers
 
 
 def load_data(ticker_type="dow30"):
@@ -178,7 +177,7 @@ def split_data(processed_full, save=True):
     save (bool): 是否保存到文件
 
     Returns:
-    tuple: (train, test, trade) 数据集
+    tuple: (train, trade) 数据集
     """
     print("分割数据集...")
 
@@ -186,21 +185,16 @@ def split_data(processed_full, save=True):
     train = data_split(
         processed_full, config.DEMO_TRAIN_START_DATE, config.DEMO_TRAIN_END_DATE
     )
-    test = data_split(
-        processed_full, config.DEMO_TEST_START_DATE, config.DEMO_TEST_END_DATE
-    )
     trade = data_split(
         processed_full, config.DEMO_TRADE_START_DATE, config.DEMO_TRADE_END_DATE
     )
 
     print(f"训练集: {len(train)}行，从{train['date'].min()}到{train['date'].max()}")
-    print(f"测试集: {len(test)}行，从{test['date'].min()}到{test['date'].max()}")
     print(f"交易集: {len(trade)}行，从{trade['date'].min()}到{trade['date'].max()}")
 
     if save:
         # 保存拆分后的数据集
         train.to_csv(f"{config.DATA_SAVE_DIR}/train.csv", index=True)
-        test.to_csv(f"{config.DATA_SAVE_DIR}/test.csv", index=True)
         trade.to_csv(f"{config.DATA_SAVE_DIR}/trade.csv", index=True)
 
         # 保存处理后的完整数据
@@ -208,7 +202,7 @@ def split_data(processed_full, save=True):
 
         print(f"数据集已保存到{config.DATA_SAVE_DIR}目录")
 
-    return train, test, trade
+    return train, trade
 
 
 def process_all_data(ticker_type="dow30"):
@@ -219,7 +213,7 @@ def process_all_data(ticker_type="dow30"):
     ticker_type (str): 指数类型，可选 "dow30", "sp500", "nasdaq100" 或 "all"
 
     Returns:
-    tuple: (processed_full, train, test, trade) 数据
+    tuple: (processed_full, train, trade) 数据
     """
     # 确保数据目录存在
     if not os.path.exists(config.DATA_SAVE_DIR):
@@ -238,8 +232,8 @@ def process_all_data(ticker_type="dow30"):
     processed_full = add_trading_day_index(processed_full)
 
     # 5. 拆分数据集
-    train, test, trade = split_data(processed_full)
-    return processed_full, train, test, trade
+    train, trade = split_data(processed_full)
+    return processed_full, train, trade
 
 
 def main():
@@ -254,7 +248,7 @@ def main():
     args = parser.parse_args()
 
     print("开始处理数据...")
-    processed_full, train, test, trade = process_all_data(args.ticker_type)
+    processed_full, train, trade = process_all_data(args.ticker_type)
 
     print("\n数据处理完成!")
     print(f"技术指标列表: {config.INDICATORS}")
