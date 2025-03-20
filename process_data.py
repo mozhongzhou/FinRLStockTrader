@@ -182,12 +182,8 @@ def split_data(processed_full, save=True):
     print("分割数据集...")
 
     # 使用配置文件中的日期范围进行分割
-    train = data_split(
-        processed_full, config.DEMO_TRAIN_START_DATE, config.DEMO_TRAIN_END_DATE
-    )
-    trade = data_split(
-        processed_full, config.DEMO_TRADE_START_DATE, config.DEMO_TRADE_END_DATE
-    )
+    train = data_split(processed_full, config.TRAIN_START_DATE, config.TRAIN_END_DATE)
+    trade = data_split(processed_full, config.TRADE_START_DATE, config.TRADE_END_DATE)
 
     print(f"训练集: {len(train)}行，从{train['date'].min()}到{train['date'].max()}")
     print(f"交易集: {len(trade)}行，从{trade['date'].min()}到{trade['date'].max()}")
@@ -245,15 +241,68 @@ def main():
         choices=["dow30", "sp500", "nasdaq100", "all"],
         help="选择处理哪个指数的数据 (default: dow30)",
     )
+    parser.add_argument(
+        "--processed_file",
+        type=str,
+        help="已处理好的数据文件路径，如果指定则直接使用该文件划分数据集",
+    )
+    parser.add_argument(
+        "--train_start", type=str, help="训练集开始日期 (YYYY-MM-DD)，覆盖配置文件设置"
+    )
+    parser.add_argument(
+        "--train_end", type=str, help="训练集结束日期 (YYYY-MM-DD)，覆盖配置文件设置"
+    )
+    parser.add_argument(
+        "--trade_start", type=str, help="交易集开始日期 (YYYY-MM-DD)，覆盖配置文件设置"
+    )
+    parser.add_argument(
+        "--trade_end", type=str, help="交易集结束日期 (YYYY-MM-DD)，覆盖配置文件设置"
+    )
     args = parser.parse_args()
 
-    print("开始处理数据...")
-    processed_full, train, trade = process_all_data(args.ticker_type)
+    # 如果指定了已处理文件路径，直接加载并划分
+    if args.processed_file:
+        print(f"直接加载已处理的数据: {args.processed_file}")
+        # 检查文件是否存在
+        if not os.path.exists(args.processed_file):
+            raise FileNotFoundError(
+                f"指定的已处理数据文件不存在: {args.processed_file}"
+            )
 
-    print("\n数据处理完成!")
-    print(f"技术指标列表: {config.INDICATORS}")
-    print("\n训练集示例:")
-    print(train.head())
+        # 加载已处理好的数据
+        processed_full = pd.read_csv(args.processed_file)
+        processed_full.set_index(processed_full.columns[0], inplace=True)
+
+        # 使用命令行参数覆盖配置文件的日期设置
+        train_start = args.train_start if args.train_start else config.TRAIN_START_DATE
+        train_end = args.train_end if args.train_end else config.TRAIN_END_DATE
+        trade_start = args.trade_start if args.trade_start else config.TRADE_START_DATE
+        trade_end = args.trade_end if args.trade_end else config.TRADE_END_DATE
+
+        print(
+            f"使用日期范围: 训练({train_start}到{train_end}), 交易({trade_start}到{trade_end})"
+        )
+
+        # 分割数据集
+        train = data_split(processed_full, train_start, train_end)
+        trade = data_split(processed_full, trade_start, trade_end)
+
+        # 保存划分好的数据
+        train.to_csv(f"{config.DATA_SAVE_DIR}/train.csv", index=True)
+        trade.to_csv(f"{config.DATA_SAVE_DIR}/trade.csv", index=True)
+
+        print(f"数据集划分完成并保存!")
+        print(f"训练集: {len(train)}行，从{train['date'].min()}到{train['date'].max()}")
+        print(f"交易集: {len(trade)}行，从{trade['date'].min()}到{trade['date'].max()}")
+    else:
+        # 走原有的完整数据处理流程
+        print("开始处理数据...")
+        processed_full, train, trade = process_all_data(args.ticker_type)
+
+        print("\n数据处理完成!")
+        print(f"技术指标列表: {config.INDICATORS}")
+        print("\n训练集示例:")
+        print(train.head())
 
 
 if __name__ == "__main__":

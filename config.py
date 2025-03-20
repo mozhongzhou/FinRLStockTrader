@@ -34,40 +34,53 @@ INDICATORS = [
     "close_60_sma",
 ]
 
-
+TOTAL_TIME_STEPS = 200000
 # Model Parameters
 A2C_PARAMS = {
-    "n_steps": 5,
-    "ent_coef": 0.01,
-    "learning_rate": 0.0007,
-    "device": "cpu",
+    "n_steps": 256,  # 增加到256减少更新频率
+    "ent_coef": 0.01,  # 保持探索平衡
+    "learning_rate": 0.002,  # 稍微提高学习率加速收敛
+    "device": "cuda",
+    "normalize_advantage": True,
+    "gae_lambda": 0.95,
+    "gamma": 0.99,  # 添加折扣因子
+    "vf_coef": 0.5,  # 价值函数系数
 }
+
 PPO_PARAMS = {
-    "n_steps": 2048,
+    "n_steps": 4096,  # 增加步数减少更新频率
+    "batch_size": 1024,  # 大幅提高批处理大小
     "ent_coef": 0.01,
-    "learning_rate": 0.00025,
-    "batch_size": 64,
-    "device": "cpu",
+    "learning_rate": 0.0003,
+    "device": "cuda",
+    "n_epochs": 5,  # 限制每批数据训练次数
+    "clip_range": 0.2,  # 明确设置裁剪范围
 }
 DDPG_PARAMS = {
-    "batch_size": 128,
-    "buffer_size": 50000,
+    "batch_size": 512,  # 增加批处理大小
+    "buffer_size": 300000,  # 增加缓冲区大小
     "learning_rate": 0.001,
-    "device": "cpu",
+    "device": "cuda",
+    "train_freq": (10, "step"),  # 减少训练频率
+    "gradient_steps": 1,  # 限制每次更新的梯度步数
 }
 TD3_PARAMS = {
-    "batch_size": 100,
-    "buffer_size": 1000000,
+    "batch_size": 512,  # 大幅增加批处理大小
+    "buffer_size": 500000,  # 减少内存压力但保持足够大
     "learning_rate": 0.001,
-    "device": "cpu",
+    "device": "cuda",
+    "train_freq": (10, "step"),  # 减少训练频率
+    "gradient_steps": 1,  # 限制梯度步数
 }
 SAC_PARAMS = {
-    "batch_size": 64,
-    "buffer_size": 100000,
+    "batch_size": 512,  # 增加批处理大小
+    "buffer_size": 300000,  # 适当增加缓冲区
     "learning_rate": 0.0001,
-    "learning_starts": 100,
+    "learning_starts": 10000,  # 大幅增加预热样本数
     "ent_coef": "auto_0.1",
-    "device": "cpu",
+    "device": "cuda",
+    "train_freq": (10, "step"),  # 减少训练频率
+    "gradient_steps": 1,  # 限制梯度步数
 }
 ERL_PARAMS = {
     "learning_rate": 3e-5,

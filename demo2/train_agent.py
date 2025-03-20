@@ -4,7 +4,10 @@ from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv
 from finrl.agents.stablebaselines3.models import DRLAgent
 from stable_baselines3.common.logger import configure
 import sys
+import torch
 
+torch.cuda.init()
+torch.cuda.empty_cache()
 # 添加项目根目录到路径
 sys.path.append(".")
 
@@ -30,7 +33,7 @@ if_using_td3 = True  # 是否训练TD3模型
 if_using_sac = True  # 是否训练SAC模型
 
 # 训练总步数
-total_timesteps = 50000  # 可以根据需要调整
+total_timesteps = TOTAL_TIME_STEPS  # 可以根据需要调整
 
 
 # 随机种子，设置为None表示使用随机种子
@@ -122,7 +125,7 @@ def train_models(
         )
 
         # 保存模型
-        trained_a2c.save(f"{TRAINED_MODEL_DIR}/a2c_dow_30")
+        trained_a2c.save(f"{TRAINED_MODEL_DIR}/a2c_spy_500")
         trained_models["a2c"] = trained_a2c
         print("A2C模型训练完成并保存")
 
@@ -143,7 +146,7 @@ def train_models(
         )
 
         # 保存模型
-        trained_ppo.save(f"{TRAINED_MODEL_DIR}/ppo_dow_30")
+        trained_ppo.save(f"{TRAINED_MODEL_DIR}/ppo_spy_500")
         trained_models["ppo"] = trained_ppo
         print("PPO模型训练完成并保存")
 
@@ -164,7 +167,7 @@ def train_models(
         )
 
         # 保存模型
-        trained_ddpg.save(f"{TRAINED_MODEL_DIR}/ddpg_dow_30")
+        trained_ddpg.save(f"{TRAINED_MODEL_DIR}/ddpg_spy_500")
         trained_models["ddpg"] = trained_ddpg
         print("DDPG模型训练完成并保存")
 
@@ -185,7 +188,7 @@ def train_models(
         )
 
         # 保存模型
-        trained_td3.save(f"{TRAINED_MODEL_DIR}/td3_dow_30")
+        trained_td3.save(f"{TRAINED_MODEL_DIR}/td3_spy_500")
         trained_models["td3"] = trained_td3
         print("TD3模型训练完成并保存")
 
@@ -220,7 +223,9 @@ def main():
     global total_timesteps, seed
 
     print("=== 训练模型流程开始 ===")
-    print(f"训练日期范围: {TRAIN_START_DATE} 至 {TRAIN_END_DATE}")
+    print(
+        f"训练日期范围: {TRAIN_START_DATE} 至 {TRAIN_END_DATE} (请注意,以提供的训练集为准,准确范围为整个训练集)"
+    )
     print(
         f"训练模型: A2C={if_using_a2c}, PPO={if_using_ppo}, DDPG={if_using_ddpg}, TD3={if_using_td3}, SAC={if_using_sac}"
     )

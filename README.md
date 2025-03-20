@@ -12,3 +12,9 @@ README.md 项目说明文档，包含安装和运行指导
 .gitignore 忽略不必要的文件，如临时文件或大体积数据
 
 使用 FinRL 框架
+
+启用面板可视化训练过程
+
+```
+tensorboard --logdir=demo2/tensorboard_log
+```
