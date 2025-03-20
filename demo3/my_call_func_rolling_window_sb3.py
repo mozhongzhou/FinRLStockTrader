@@ -1,10 +1,5 @@
 import os
 import numpy as np
-
-# 添加NumPy兼容性补丁
-if not hasattr(np, "NINF"):
-    np.NINF = -np.inf
-    print("已添加NumPy兼容性补丁: np.NINF = -np.inf")
 import pandas as pd
 import matplotlib.pyplot as plt
 from finrl.agents.stablebaselines3.models import DRLAgent
