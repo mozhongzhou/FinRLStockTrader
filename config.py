@@ -53,13 +53,13 @@ DDPG_PARAMS = {
     "batch_size": 128,
     "buffer_size": 50000,
     "learning_rate": 0.001,
-    "device": "cuda",
+    "device": "cpu",
 }
 TD3_PARAMS = {
     "batch_size": 100,
     "buffer_size": 1000000,
     "learning_rate": 0.001,
-    "device": "cuda",
+    "device": "cpu",
 }
 SAC_PARAMS = {
     "batch_size": 64,
@@ -67,7 +67,7 @@ SAC_PARAMS = {
     "learning_rate": 0.0001,
     "learning_starts": 100,
     "ent_coef": "auto_0.1",
-    "device": "cuda",
+    "device": "cpu",
 }
 ERL_PARAMS = {
     "learning_rate": 3e-5,

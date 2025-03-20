@@ -30,7 +30,7 @@ if_using_td3 = True  # 是否训练TD3模型
 if_using_sac = True  # 是否训练SAC模型
 
 # 训练总步数
-total_timesteps = 30000  # 可以根据需要调整
+total_timesteps = 50000  # 可以根据需要调整
 
 
 # 随机种子，设置为None表示使用随机种子
@@ -74,9 +74,9 @@ def build_environment(df):
 
 def train_models(
     train_data,
-    if_using_a2c=True,
+    if_using_a2c=False,
     if_using_ppo=True,
-    if_using_ddpg=True,
+    if_using_ddpg=False,
     if_using_td3=False,
     if_using_sac=False,
     total_timesteps=50000,
@@ -228,22 +228,15 @@ def main():
 
     # 使用配置中的数据目录
     train_path = os.path.join(DATA_SAVE_DIR, "train.csv")
-    test_path = os.path.join(DATA_SAVE_DIR, "test.csv")
 
     # 检查文件是否存在
     if not os.path.exists(train_path):
         raise FileNotFoundError(f"训练集文件不存在: {train_path}")
-    if not os.path.exists(test_path):
-        raise FileNotFoundError(f"测试集文件不存在: {test_path}")
 
     # 直接加载数据
     train = pd.read_csv(train_path)
     train = train.set_index(train.columns[0])
     train.index.names = [""]
-    test = pd.read_csv(test_path)
-    test = test.set_index(test.columns[0])
-    test.index.names = [""]
-
     print(f"训练集大小: {len(train)} 行, {train['tic'].nunique()} 支股票")
     print(f"使用的技术指标: {INDICATORS}")
 

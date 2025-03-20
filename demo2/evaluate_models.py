@@ -1,12 +1,21 @@
 import os
 import numpy as np
 
-# 添加NumPy兼容性补丁
-if not hasattr(np, "NINF"):
-    np.NINF = -np.inf
-    print("已添加NumPy兼容性补丁: np.NINF = -np.inf")
+# # 添加NumPy兼容性补丁
+# if not hasattr(np, "NINF"):
+#     np.NINF = -np.inf
+#     print("已添加NumPy兼容性补丁: np.NINF = -np.inf")
+
 import pandas as pd
 import matplotlib.pyplot as plt
+
+# 设置中文字体支持
+plt.rcParams["font.sans-serif"] = [
+    "SimHei",
+    "Microsoft YaHei",
+    "SimSun",
+]  # 优先使用的中文字体
+plt.rcParams["axes.unicode_minus"] = False  # 解决负号显示问题
 from finrl.meta.preprocessor.preprocessors import data_split
 from finrl.meta.env_stock_trading.env_stocktrading import StockTradingEnv
 from finrl.agents.stablebaselines3.models import DRLAgent
@@ -91,13 +100,13 @@ def load_models():
     # 检查并加载A2C模型
     a2c_path = f"{TRAINED_MODEL_DIR}/a2c_dow_30.zip"
     if os.path.exists(a2c_path):
-        models["a2c"] = A2C.load(a2c_path)
+        models["a2c"] = A2C.load(a2c_path, device="cpu")
         print("已加载A2C模型")
 
     # 检查并加载PPO模型
     ppo_path = f"{TRAINED_MODEL_DIR}/ppo_dow_30.zip"
     if os.path.exists(ppo_path):
-        models["ppo"] = PPO.load(ppo_path)
+        models["ppo"] = PPO.load(ppo_path, device="cpu")
         print("已加载PPO模型")
 
     # 检查并加载DDPG模型
@@ -106,7 +115,225 @@ def load_models():
         models["ddpg"] = DDPG.load(ddpg_path)
         print("已加载DDPG模型")
 
+    # 检查并加载TD3模型
+    td3_path = f"{TRAINED_MODEL_DIR}/td3_dow_30.zip"
+    if os.path.exists(td3_path):
+        models["td3"] = TD3.load(td3_path)
+        print("已加载TD3模型")
+
+    # 检查并加载SAC模型
+    sac_path = f"{TRAINED_MODEL_DIR}/sac_dow_30.zip"
+    if os.path.exists(sac_path):
+        models["sac"] = SAC.load(sac_path)
+        print("已加载SAC模型")
+
     return models
+
+
+def plot_model_performance_comparison(trading_results, df_dji_aligned):
+    """
+    绘制不同模型与基准的性能对比图表
+
+    Args:
+        trading_results (dict): 包含不同模型结果的字典
+        df_dji_aligned (DataFrame): 基准数据
+    """
+    # 收集所有模型和基准的统计数据
+    model_names = list(trading_results.keys()) + ["DJI"]
+    annual_returns = []
+    cumulative_returns = []
+    annual_volatility = []
+    sharpe_ratios = []
+    calmar_ratios = []
+    max_drawdowns = []
+
+    # 计算每个模型的统计数据
+    for model_name in trading_results.keys():
+        df_stat = trading_results[model_name].copy()
+        df_stat = df_stat.reset_index()
+        df_stat.columns.values[0] = "date"
+        model_stats = backtest_stats(df_stat, value_col_name=model_name)
+
+        annual_returns.append(model_stats[0])
+        cumulative_returns.append(model_stats[1])
+        annual_volatility.append(model_stats[2])
+        sharpe_ratios.append(model_stats[3])
+        calmar_ratios.append(model_stats[4])
+        max_drawdowns.append(model_stats[5])
+
+    # 添加基准统计数据
+    df_dji_stat = df_dji_aligned.copy()
+    df_dji_stat = df_dji_stat.reset_index()
+    df_dji_stat.columns.values[0] = "date"
+    baseline_stats = backtest_stats(df_dji_stat, value_col_name="dji")
+
+    annual_returns.append(baseline_stats[0])
+    cumulative_returns.append(baseline_stats[1])
+    annual_volatility.append(baseline_stats[2])
+    sharpe_ratios.append(baseline_stats[3])
+    calmar_ratios.append(baseline_stats[4])
+    max_drawdowns.append(baseline_stats[5])
+
+    # 创建主图和子图
+    fig = plt.figure(figsize=(20, 15))
+    fig.suptitle("强化学习模型性能对比分析", fontsize=24)
+
+    # 设置颜色
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
+
+    # 子图1: 年化收益率
+    ax1 = fig.add_subplot(3, 2, 1)
+    bars1 = ax1.bar(
+        model_names, [r * 100 for r in annual_returns], color=colors[: len(model_names)]
+    )
+    ax1.set_title("年化收益率 (%)", fontsize=16)
+    ax1.set_ylabel("百分比 (%)")
+    # 添加数值标签
+    for bar in bars1:
+        height = bar.get_height()
+        ax1.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 0.5,
+            f"{height:.2f}%",
+            ha="center",
+            va="bottom",
+        )
+
+    # 子图2: 累计收益率
+    ax2 = fig.add_subplot(3, 2, 2)
+    bars2 = ax2.bar(
+        model_names,
+        [r * 100 for r in cumulative_returns],
+        color=colors[: len(model_names)],
+    )
+    ax2.set_title("累计收益率 (%)", fontsize=16)
+    ax2.set_ylabel("百分比 (%)")
+    for bar in bars2:
+        height = bar.get_height()
+        ax2.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 0.5,
+            f"{height:.2f}%",
+            ha="center",
+            va="bottom",
+        )
+
+    # 子图3: 年化波动率
+    ax3 = fig.add_subplot(3, 2, 3)
+    bars3 = ax3.bar(
+        model_names,
+        [r * 100 for r in annual_volatility],
+        color=colors[: len(model_names)],
+    )
+    ax3.set_title("年化波动率 (%)", fontsize=16)
+    ax3.set_ylabel("百分比 (%)")
+    for bar in bars3:
+        height = bar.get_height()
+        ax3.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 0.5,
+            f"{height:.2f}%",
+            ha="center",
+            va="bottom",
+        )
+
+    # 子图4: 夏普比率
+    ax4 = fig.add_subplot(3, 2, 4)
+    bars4 = ax4.bar(model_names, sharpe_ratios, color=colors[: len(model_names)])
+    ax4.set_title("夏普比率", fontsize=16)
+    for bar in bars4:
+        height = bar.get_height()
+        ax4.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 0.1,
+            f"{height:.2f}",
+            ha="center",
+            va="bottom",
+        )
+
+    # 子图5: 卡玛比率
+    ax5 = fig.add_subplot(3, 2, 5)
+    bars5 = ax5.bar(model_names, calmar_ratios, color=colors[: len(model_names)])
+    ax5.set_title("卡玛比率", fontsize=16)
+    for bar in bars5:
+        height = bar.get_height()
+        ax5.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 0.1,
+            f"{height:.2f}",
+            ha="center",
+            va="bottom",
+        )
+
+    # 子图6: 最大回撤
+    ax6 = fig.add_subplot(3, 2, 6)
+    bars6 = ax6.bar(
+        model_names, [r * 100 for r in max_drawdowns], color=colors[: len(model_names)]
+    )
+    ax6.set_title("最大回撤 (%)", fontsize=16)
+    ax6.set_ylabel("百分比 (%)")
+    for bar in bars6:
+        height = bar.get_height()
+        ax6.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 0.5,
+            f"{height:.2f}%",
+            ha="center",
+            va="bottom",
+        )
+
+    # 调整布局，避免重叠
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    # 保存组合图
+    plt.savefig(f"{RESULTS_DIR}/model_performance_comparison.png", dpi=300)
+
+    # 保存单独的指标图表
+    metrics = [
+        ("年化收益率", annual_returns, True),
+        ("累计收益率", cumulative_returns, True),
+        ("年化波动率", annual_volatility, True),
+        ("夏普比率", sharpe_ratios, False),
+        ("卡玛比率", calmar_ratios, False),
+        ("最大回撤", max_drawdowns, True),
+    ]
+
+    for metric_name, metric_values, is_percentage in metrics:
+        plt.figure(figsize=(10, 6))
+
+        if is_percentage:
+            bars = plt.bar(
+                model_names,
+                [v * 100 for v in metric_values],
+                color=colors[: len(model_names)],
+            )
+            plt.ylabel("百分比 (%)")
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height + 0.5,
+                    f"{height:.2f}%",
+                    ha="center",
+                    va="bottom",
+                )
+        else:
+            bars = plt.bar(model_names, metric_values, color=colors[: len(model_names)])
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height + 0.1,
+                    f"{height:.2f}",
+                    ha="center",
+                    va="bottom",
+                )
+
+        plt.title(f"{metric_name}对比", fontsize=16)
+        plt.tight_layout()
+        plt.savefig(f"{RESULTS_DIR}/{metric_name}_comparison.png", dpi=300)
+        plt.close()
+
+    print(f"所有性能对比图表已保存到 {RESULTS_DIR} 目录")
 
 
 def evaluate_models(trade_data, models):
@@ -167,50 +394,18 @@ def evaluate_models(trade_data, models):
         # 保存合并结果
         result.to_csv(f"{RESULTS_DIR}/evaluation_results.csv")
 
-        # 绘制结果对比图
-        plt.figure(figsize=(50, 10))
-        plt.title("Portfolio Value Comparison")
-        plt.xlabel("Date")
-        plt.ylabel("Portfolio Value ($)")
+        # 绘制结果对比图 - 使用更简洁的方式，与示例代码一致
+        plt.rcParams["figure.figsize"] = (15, 5)
+        plt.figure()
         result.plot()
-        plt.tight_layout()  # 确保标签完全显示
-        plt.savefig(f"{RESULTS_DIR}/evaluation_comparison_plot.png", dpi=800)
-
-        # 计算每个模型的表现统计数据
-        print("\n=== 模型表现统计数据 ===")
-        for model_name in trading_results.keys():
-            # 准备用于统计的数据框 - 复制一份避免影响原始数据
-            df_stat = trading_results[model_name].copy()
-            # 重置索引，将日期变为常规列
-            df_stat = df_stat.reset_index()
-            # 确保第一列名为'date'，这是backtest_stats函数所期望的
-            df_stat.columns.values[0] = "date"
-
-            # 计算统计数据
-            model_stats = backtest_stats(df_stat, value_col_name=model_name)
-
-            print(f"\n{model_name.upper()} 模型:")
-            print(f"年化收益率: {model_stats[0]:.2%}")
-            print(f"累计收益率: {model_stats[1]:.2%}")
-            print(f"年化波动率: {model_stats[2]:.2%}")
-            print(f"夏普比率: {model_stats[3]:.2f}")
-            print(f"卡玛比率: {model_stats[4]:.2f}")
-            print(f"最大回撤: {model_stats[5]:.2%}")
-
-        # 基准统计也需要同样处理
-        df_dji_stat = df_dji_aligned.copy()
-        df_dji_stat = df_dji_stat.reset_index()
-        df_dji_stat.columns.values[0] = "date"
-        baseline_stats = backtest_stats(df_dji_stat, value_col_name="dji")
-
-        print("\n基准 (DJI):")
-        print(f"年化收益率: {baseline_stats[0]:.2%}")
-        print(f"累计收益率: {baseline_stats[1]:.2%}")
-        print(f"年化波动率: {baseline_stats[2]:.2%}")
-        print(f"夏普比率: {baseline_stats[3]:.2f}")
-        print(f"卡玛比率: {baseline_stats[4]:.2f}")
-        print(f"最大回撤: {baseline_stats[5]:.2%}")
-
+        plt.title("投资组合价值比较")
+        plt.xlabel("日期")
+        plt.ylabel("价值 (元)")
+        plt.tight_layout()
+        plt.savefig(f"{RESULTS_DIR}/portfolio_comparison.png", dpi=300)
+        plt.close()
+        print("\n=== 生成模型性能对比图表 ===")
+        plot_model_performance_comparison(trading_results, df_dji_aligned)
         return result
 
     print("警告: 没有找到交易结果")
