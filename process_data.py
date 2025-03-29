@@ -183,10 +183,10 @@ def split_data(processed_full, save=True):
 
     # 使用配置文件中的日期范围进行分割
     train = data_split(
-        processed_full, config.DEMO_TRAIN_START_DATE, config.DEMO_TRAIN_END_DATE
+        processed_full, config.TRAIN_START_DATE, config.TRAIN_END_DATE
     )
     trade = data_split(
-        processed_full, config.DEMO_TRADE_START_DATE, config.DEMO_TRADE_END_DATE
+        processed_full, config.TRADE_START_DATE, config.TRADE_END_DATE
     )
 
     print(f"训练集: {len(train)}行，从{train['date'].min()}到{train['date'].max()}")
