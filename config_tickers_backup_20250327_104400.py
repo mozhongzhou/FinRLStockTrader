@@ -3,7 +3,7 @@ from __future__ import annotations
 SINGLE_TICKER = ["AAPL"]
 #####################################道指30/纳指100/标普500#################################################
 # https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average
-# 截至2025-03-27 10:44:00
+# 截至2025-03-20 01:51:49
 DOW_30_TICKER = [
     "MMM",
     "AXP",
@@ -211,6 +211,7 @@ SP_500_TICKER = [
     "BK",
     "BA",
     "BKNG",
+    "BWA",
     "BSX",
     "BMY",
     "AVGO",
@@ -234,6 +235,7 @@ SP_500_TICKER = [
     "CBOE",
     "CBRE",
     "CDW",
+    "CE",
     "COR",
     "CNC",
     "CNP",
@@ -293,7 +295,6 @@ SP_500_TICKER = [
     "DLTR",
     "D",
     "DPZ",
-    "DASH",
     "DOV",
     "DOW",
     "DHI",
@@ -324,7 +325,6 @@ SP_500_TICKER = [
     "EVRG",
     "ES",
     "EXC",
-    "EXE",
     "EXPE",
     "EXPD",
     "EXR",
@@ -340,6 +340,7 @@ SP_500_TICKER = [
     "FSLR",
     "FE",
     "FI",
+    "FMC",
     "F",
     "FTNT",
     "FTV",
@@ -581,6 +582,7 @@ SP_500_TICKER = [
     "TGT",
     "TEL",
     "TDY",
+    "TFX",
     "TER",
     "TSLA",
     "TXN",
@@ -588,7 +590,6 @@ SP_500_TICKER = [
     "TXT",
     "TMO",
     "TJX",
-    "TKO",
     "TSCO",
     "TT",
     "TDG",
@@ -634,7 +635,6 @@ SP_500_TICKER = [
     "WST",
     "WDC",
     "WY",
-    "WSM",
     "WMB",
     "WTW",
     "WDAY",

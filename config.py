@@ -7,12 +7,12 @@ TENSORBOARD_LOG_DIR = "tensorboard_log"
 RESULTS_DIR = "results"
 
 # date format: '%Y-%m-%d'
-TRAIN_START_DATE = "2000-01-01"  # bug fix: set Monday right, start date set 2014-01-01 ValueError: all the input array dimensions for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 1658 and the array at index 1 has size 1657
-TRAIN_END_DATE = "2022-12-31"
+TRAIN_START_DATE = "2018-01-01"  # bug fix: set Monday right, start date set 2014-01-01 ValueError: all the input array dimensions for the concatenation axis must match exactly, but along dimension 0, the array at index 0 has size 1658 and the array at index 1 has size 1657
+TRAIN_END_DATE = "2020-12-31"
 # TEST_START_DATE = "2020-01-01"
 # TEST_END_DATE = "2022-12-31"
 TRADE_START_DATE = "2023-01-01"
-TRADE_END_DATE = "2025-03-19"
+TRADE_END_DATE = "2023-12-31"
 
 DEMO_TRAIN_START_DATE = "2020-01-01"
 DEMO_TRAIN_END_DATE = "2023-12-31"
@@ -34,54 +34,77 @@ INDICATORS = [
     "close_60_sma",
 ]
 
-TOTAL_TIME_STEPS = 200000
+TOTAL_TIME_STEPS = 5000
 # Model Parameters
 A2C_PARAMS = {
-    "n_steps": 256,  # 增加到256减少更新频率
-    "ent_coef": 0.01,  # 保持探索平衡
-    "learning_rate": 0.002,  # 稍微提高学习率加速收敛
-    "device": "cuda",
-    "normalize_advantage": True,
-    "gae_lambda": 0.95,
-    "gamma": 0.99,  # 添加折扣因子
-    "vf_coef": 0.5,  # 价值函数系数
+    "n_steps": 5,
+    "ent_coef": 0.01,
+    "learning_rate": 0.0007,
+    "device": "cpu",
 }
 
 PPO_PARAMS = {
-    "n_steps": 4096,  # 增加步数减少更新频率
-    "batch_size": 1024,  # 大幅提高批处理大小
+    "n_steps": 2048,
     "ent_coef": 0.01,
-    "learning_rate": 0.0003,
-    "device": "cuda",
-    "n_epochs": 5,  # 限制每批数据训练次数
-    "clip_range": 0.2,  # 明确设置裁剪范围
+    "learning_rate": 0.00025,
+    "batch_size": 64,
+    "device": "cpu",
 }
 DDPG_PARAMS = {
-    "batch_size": 512,  # 增加批处理大小
-    "buffer_size": 300000,  # 增加缓冲区大小
+    "batch_size": 128,
+    "buffer_size": 50000,
     "learning_rate": 0.001,
-    "device": "cuda",
-    "train_freq": (10, "step"),  # 减少训练频率
-    "gradient_steps": 1,  # 限制每次更新的梯度步数
+    "device": "cpu",
 }
 TD3_PARAMS = {
-    "batch_size": 512,  # 大幅增加批处理大小
-    "buffer_size": 500000,  # 减少内存压力但保持足够大
+    "batch_size": 100,
+    "buffer_size": 1000000,
     "learning_rate": 0.001,
-    "device": "cuda",
-    "train_freq": (10, "step"),  # 减少训练频率
-    "gradient_steps": 1,  # 限制梯度步数
+    "device": "cpu",
 }
 SAC_PARAMS = {
-    "batch_size": 512,  # 增加批处理大小
-    "buffer_size": 300000,  # 适当增加缓冲区
+    "batch_size": 64,
+    "buffer_size": 100000,
     "learning_rate": 0.0001,
-    "learning_starts": 10000,  # 大幅增加预热样本数
+    "learning_starts": 100,
     "ent_coef": "auto_0.1",
-    "device": "cuda",
-    "train_freq": (10, "step"),  # 减少训练频率
-    "gradient_steps": 1,  # 限制梯度步数
+    "device": "cpu",
 }
+# PPO_PARAMS = {
+#     "n_steps": 2048,  # 从4096减少到2048以降低内存压力
+#     "batch_size": 512,  # 从1024减少到512以降低内存使用
+#     "ent_coef": 0.01,
+#     "learning_rate": 0.0003,
+#     "device": "cpu",
+#     "n_epochs": 4,  # 从5减少到4以加快训练
+#     "clip_range": 0.2,
+# }
+# DDPG_PARAMS = {
+#     "batch_size": 256,  # 从512减小到256
+#     "buffer_size": 100000,  # 从300000显著减少到100000
+#     "learning_rate": 0.001,
+#     "device": "cuda",
+#     "train_freq": (10, "step"),
+#     "gradient_steps": 1,
+# }
+# TD3_PARAMS = {
+#     "batch_size": 256,  # 从512减小到256
+#     "buffer_size": 100000,  # 从500000大幅减少到100000
+#     "learning_rate": 0.001,
+#     "device": "cuda",
+#     "train_freq": (20, "step"),  # 从10增加到20以减少更新频率
+#     "gradient_steps": 1,
+# }
+# SAC_PARAMS = {
+#     "batch_size": 256,  # 从512减小到256
+#     "buffer_size": 100000,  # 从300000减少到100000
+#     "learning_rate": 0.0003,  # 从0.0001增加到0.0003以加快收敛
+#     "learning_starts": 5000,  # 从10000减少到5000以加快初始阶段
+#     "ent_coef": "auto_0.1",
+#     "device": "cuda",
+#     "train_freq": (20, "step"),  # 从10增加到20以减少更新频率
+#     "gradient_steps": 1,
+# }
 ERL_PARAMS = {
     "learning_rate": 3e-5,
     "batch_size": 2048,

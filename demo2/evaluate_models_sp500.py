@@ -1,11 +1,5 @@
 import os
 import numpy as np
-
-# # 添加NumPy兼容性补丁
-# if not hasattr(np, "NINF"):
-#     np.NINF = -np.inf
-#     print("已添加NumPy兼容性补丁: np.NINF = -np.inf")
-
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -29,11 +23,7 @@ sys.path.append(".")
 
 # 导入配置
 from config import *
-from config_tickers import DOW_30_TICKER
 
-# 配置参数 - 优先使用DEMO参数，如果不存在则使用标准参数
-TRADE_START_DATE = TRADE_START_DATE
-TRADE_END_DATE = TRADE_END_DATE
 
 # 技术指标列表 - 使用配置文件中的定义
 INDICATORS = INDICATORS  # 直接从config.py导入
@@ -69,7 +59,7 @@ def build_environment(df):
     # 环境参数
     env_kwargs = {
         "hmax": 100,  # 最大交易数量
-        "initial_amount": 1000000,  # 初始资金
+        "initial_amount": 20000,  # 初始资金
         "num_stock_shares": num_stock_shares,
         "buy_cost_pct": buy_cost_list,
         "sell_cost_pct": sell_cost_list,
@@ -94,7 +84,7 @@ def load_models():
     models = {}
 
     # 检查并加载A2C模型
-    a2c_path = f"{TRAINED_MODEL_DIR}/a2c_spy_500.zip"
+    a2c_path = f"{TRAINED_MODEL_DIR}/a2c_model_100000_steps.zip"
     if os.path.exists(a2c_path):
         models["a2c"] = A2C.load(a2c_path, device="cpu")
         print("已加载A2C模型")
@@ -105,37 +95,37 @@ def load_models():
         models["ppo"] = PPO.load(ppo_path, device="cpu")
         print("已加载PPO模型")
 
-    # 检查并加载DDPG模型
-    ddpg_path = f"{TRAINED_MODEL_DIR}/ddpg_spy_500.zip"
-    if os.path.exists(ddpg_path):
-        models["ddpg"] = DDPG.load(ddpg_path)
-        print("已加载DDPG模型")
+    # # 检查并加载DDPG模型
+    # ddpg_path = f"{TRAINED_MODEL_DIR}/"
+    # if os.path.exists(ddpg_path):
+    #     models["ddpg"] = DDPG.load(ddpg_path)
+    #     print("已加载DDPG模型")
 
-    # 检查并加载TD3模型
-    td3_path = f"{TRAINED_MODEL_DIR}/td3_spy_500.zip"
-    if os.path.exists(td3_path):
-        models["td3"] = TD3.load(td3_path)
-        print("已加载TD3模型")
+    # # 检查并加载TD3模型
+    # td3_path = f"{TRAINED_MODEL_DIR}/"
+    # if os.path.exists(td3_path):
+    #     models["td3"] = TD3.load(td3_path)
+    #     print("已加载TD3模型")
 
-    # 检查并加载SAC模型
-    sac_path = f"{TRAINED_MODEL_DIR}/sac_dow_30.zip"
-    if os.path.exists(sac_path):
-        models["sac"] = SAC.load(sac_path)
-        print("已加载SAC模型")
+    # # 检查并加载SAC模型
+    # sac_path = f"{TRAINED_MODEL_DIR}/"
+    # if os.path.exists(sac_path):
+    #     models["sac"] = SAC.load(sac_path)
+    #     print("已加载SAC模型")
 
     return models
 
 
-def plot_model_performance_comparison(trading_results, df_dji_aligned):
+def plot_model_performance_comparison(trading_results, df_sp500_aligned):
     """
     绘制不同模型与基准的性能对比图表
 
     Args:
         trading_results (dict): 包含不同模型结果的字典
-        df_dji_aligned (DataFrame): 基准数据
+        df_sp500_aligned (DataFrame): 基准数据
     """
     # 收集所有模型和基准的统计数据
-    model_names = list(trading_results.keys()) + ["DJI"]
+    model_names = list(trading_results.keys()) + ["S&P 500"]
     annual_returns = []
     cumulative_returns = []
     annual_volatility = []
@@ -158,10 +148,10 @@ def plot_model_performance_comparison(trading_results, df_dji_aligned):
         max_drawdowns.append(model_stats[5])
 
     # 添加基准统计数据
-    df_dji_stat = df_dji_aligned.copy()
-    df_dji_stat = df_dji_stat.reset_index()
-    df_dji_stat.columns.values[0] = "date"
-    baseline_stats = backtest_stats(df_dji_stat, value_col_name="dji")
+    df_sp500_stat = df_sp500_aligned.copy()
+    df_sp500_stat = df_sp500_stat.reset_index()
+    df_sp500_stat.columns.values[0] = "date"
+    baseline_stats = backtest_stats(df_sp500_stat, value_col_name="S&P 500")
 
     annual_returns.append(baseline_stats[0])
     cumulative_returns.append(baseline_stats[1])
@@ -360,20 +350,20 @@ def evaluate_models(trade_data, models):
 
         trading_results[model_name] = df_result
 
-    # 获取基准指数数据（道琼斯工业平均指数）
+    # 获取基准指数数据（标普500指数）
     print("=== 获取基准指数数据 ===")
-    df_dji = get_baseline(
-        ticker="^DJI", start=DEMO_TRADE_START_DATE, end=DEMO_TRADE_END_DATE
-    )
+    df_sp500 = get_baseline(ticker="^GSPC", start=TRADE_START_DATE, end=TRADE_END_DATE)
 
     # 调整基准数据与交易数据对齐
-    df_dji_aligned = pd.DataFrame()
+    df_sp500_aligned = pd.DataFrame()
     first_model = list(trading_results.keys())[0] if trading_results else None
     if first_model:
-        df_dji_aligned["date"] = trading_results[first_model].index
+        df_sp500_aligned["date"] = trading_results[first_model].index
         initial_amount = 20000
-        df_dji_aligned["dji"] = df_dji["close"] / df_dji["close"][0] * initial_amount
-        df_dji_aligned.set_index("date", inplace=True)
+        df_sp500_aligned["S&P 500"] = (
+            df_sp500["close"] / df_sp500["close"][0] * initial_amount
+        )
+        df_sp500_aligned.set_index("date", inplace=True)
 
         # 合并所有结果
         result = pd.DataFrame()
@@ -384,7 +374,7 @@ def evaluate_models(trade_data, models):
 
         # 添加基准结果
         result = pd.merge(
-            result, df_dji_aligned, how="outer", left_index=True, right_index=True
+            result, df_sp500_aligned, how="outer", left_index=True, right_index=True
         )
 
         # 保存合并结果
@@ -401,7 +391,7 @@ def evaluate_models(trade_data, models):
         plt.savefig(f"{RESULTS_DIR}/portfolio_comparison.png", dpi=300)
         plt.close()
         print("\n=== 生成模型性能对比图表 ===")
-        plot_model_performance_comparison(trading_results, df_dji_aligned)
+        plot_model_performance_comparison(trading_results, df_sp500_aligned)
         return result
 
     print("警告: 没有找到交易结果")
